@@ -2,32 +2,16 @@ const express = require('express')
 const passport = require('passport')
 const DigestStrategy = require('passport-http').DigestStrategy
 const session = require('express-session')
+const Auth = require('./auth')
 
 const port = process.env.API_PORT || 3001
 const app = express()
-
-const User = {
-  users: [
-    { username: 'hoge', password: 'fuga', displayname: 'Hoge', email: 'hoge@hoge.hoge' },
-    { username: 'hello', password: 'world', displayname: 'Hello', email: 'hello@hello.hello' }
-  ],
-  findOne(user) {
-    return new Promise((resolve, reject) => {
-      let found = this.users.find((u) => u.username === user.username)
-      if (found) {
-        resolve(found)
-      } else {
-        reject('存在しないユーザーかパスワードが間違っています。 [x-auth:1]')
-      }
-    })
-  }
-}
 
 passport.use(
   new DigestStrategy(
     { qop: 'auth' },
     (username, done) => {
-      User.findOne({ username: username })
+      Auth.findOne({ username: username })
         .then((user) => {
           if (!user) {
             return done(null, false, { message: '存在しないユーザーかパスワードが間違っています。 [x-auth:2]' })
@@ -61,7 +45,7 @@ passport.serializeUser((user, done) => {
 })
 
 passport.deserializeUser((username, done) => {
-  User.findOne(username)
+  Auth.findOne(username)
     .then((user) => done(null, user))
     .catch((err) => done(err, null))
 })
